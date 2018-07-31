@@ -21,11 +21,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/reflection"
 )
@@ -47,10 +49,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+	creds, err := credentials.NewServerTLSFromFile("tls.crt", "tls.key")
+	if err != nil {
+		log.Fatalf("failed to read certificate: %v", err)
+	}
+	s := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterGreeterServer(s, &server{})
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
+	fmt.Printf("Backend serving at port :50051\n")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
